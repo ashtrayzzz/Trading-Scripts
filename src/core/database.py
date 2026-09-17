@@ -15,7 +15,37 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "trading_automations.db"
 DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH}"
 
-DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+
+def resolve_database_url() -> str:
+    """Resolve database URL from Streamlit secrets, environment variables, or local default."""
+    # 1. Check Streamlit Cloud st.secrets first
+    try:
+        import streamlit as st
+        try:
+            if hasattr(st, "secrets"):
+                if "DATABASE_URL" in st.secrets:
+                    return str(st.secrets["DATABASE_URL"])
+                elif "database" in st.secrets and "url" in st.secrets["database"]:
+                    return str(st.secrets["database"]["url"])
+        except Exception:
+            pass
+    except ImportError:
+        pass
+
+    # 2. Check standard environment variable
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+
+    # 3. Default to local SQLite
+    return DEFAULT_DB_URL
+
+
+DATABASE_URL = resolve_database_url()
+
+# Normalize legacy postgres:// URI scheme to postgresql:// for SQLAlchemy
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # Ensure parent directory exists for SQLite
 if DATABASE_URL.startswith("sqlite"):
@@ -27,6 +57,7 @@ connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite")
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
+    pool_pre_ping=True,
     echo=False,
     future=True,
 )

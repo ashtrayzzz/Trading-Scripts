@@ -324,7 +324,10 @@ st.markdown(
 )
 
 # Initialize database schema
-init_db()
+try:
+    init_db()
+except Exception as e:
+    st.error(f"⚠️ Database connection/initialization error: {e}. Check your DATABASE_URL in Secrets.")
 
 
 def clean_ticker(instrument_id: str) -> str:
@@ -459,6 +462,11 @@ st.caption("All candles, settlement windows, and scan routines execute in UTC. L
 # -------------------------------------------------------------
 st.sidebar.title("Trading Automations")
 st.sidebar.caption("Modular Trading Intelligence System v0.1")
+
+if DATABASE_URL.startswith("postgresql"):
+    st.sidebar.markdown("<div style='margin-bottom: 8px;'><span class='status-pill pill-green'>● SUPABASE CLOUD DB</span></div>", unsafe_allow_html=True)
+else:
+    st.sidebar.markdown("<div style='margin-bottom: 8px;'><span class='status-pill pill-amber'>STORAGE: LOCAL SQLITE</span></div>", unsafe_allow_html=True)
 
 NAV_OPTIONS = [
     "Opportunity Queue",
