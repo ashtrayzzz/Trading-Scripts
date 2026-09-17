@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -15,29 +15,58 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "trading_automations.db"
 DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH}"
 
+DATABASE_DEBUG: dict[str, Any] = {
+    "source": "default_sqlite",
+    "secret_keys_found": [],
+    "error": None,
+}
+
 
 def resolve_database_url() -> str:
     """Resolve database URL from Streamlit secrets, environment variables, or local default."""
+    global DATABASE_DEBUG
     # 1. Check Streamlit Cloud st.secrets first
     try:
         import streamlit as st
         try:
             if hasattr(st, "secrets"):
-                if "DATABASE_URL" in st.secrets:
-                    return str(st.secrets["DATABASE_URL"])
-                elif "database" in st.secrets and "url" in st.secrets["database"]:
-                    return str(st.secrets["database"]["url"])
-        except Exception:
-            pass
+                DATABASE_DEBUG["secret_keys_found"] = list(st.secrets.keys())
+                # Check top-level keys case-insensitively
+                for k in st.secrets:
+                    val = st.secrets[k]
+                    k_lower = str(k).lower()
+                    if k_lower in ("database_url", "db_url", "postgres_url", "supabase_url", "supabase_db_url", "url"):
+                        if isinstance(val, str) and val.strip():
+                            DATABASE_DEBUG["source"] = f"st.secrets['{k}']"
+                            return val.strip().strip("'").strip('"')
+                    if isinstance(val, dict):
+                        for sub_k, sub_v in val.items():
+                            sub_k_lower = str(sub_k).lower()
+                            if sub_k_lower in ("url", "database_url", "connection_string"):
+                                if isinstance(sub_v, str) and sub_v.strip():
+                                    DATABASE_DEBUG["source"] = f"st.secrets['{k}']['{sub_k}']"
+                                    return sub_v.strip().strip("'").strip('"')
+                            if isinstance(sub_v, str) and (sub_v.startswith("postgres://") or sub_v.startswith("postgresql://")):
+                                DATABASE_DEBUG["source"] = f"st.secrets['{k}']['{sub_k}']"
+                                return sub_v.strip().strip("'").strip('"')
+                    # If any value anywhere in secrets is a PostgreSQL connection string
+                    if isinstance(val, str) and (val.startswith("postgres://") or val.startswith("postgresql://")):
+                        DATABASE_DEBUG["source"] = f"st.secrets['{k}']"
+                        return val.strip().strip("'").strip('"')
+        except Exception as e:
+            DATABASE_DEBUG["error"] = f"st.secrets error: {e}"
     except ImportError:
         pass
 
-    # 2. Check standard environment variable
-    env_url = os.getenv("DATABASE_URL")
-    if env_url:
-        return env_url
+    # 2. Check standard environment variables
+    for env_key in ("DATABASE_URL", "database_url", "DB_URL", "POSTGRES_URL", "SUPABASE_DATABASE_URL"):
+        env_val = os.getenv(env_key)
+        if env_val and env_val.strip():
+            DATABASE_DEBUG["source"] = f"os.environ['{env_key}']"
+            return env_val.strip().strip("'").strip('"')
 
     # 3. Default to local SQLite
+    DATABASE_DEBUG["source"] = "default_sqlite"
     return DEFAULT_DB_URL
 
 

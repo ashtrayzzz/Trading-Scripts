@@ -94,7 +94,7 @@ def create_candlestick_chart(
         fig.add_hline(
             y=trigger_price,
             line_dash="dash",
-            line_color="#00e676",
+            line_color="#10b981",
             line_width=1.5,
             annotation_text=f"Trigger: {trigger_price:.2f}",
             annotation_position="top left",

@@ -20,7 +20,7 @@ from src.accounts.personal import PersonalAccount
 from src.app.components.chart import create_candlestick_chart
 from src.connectors.bybit import BybitConnector
 from src.connectors.yahoo_finance import YahooFinanceConnector
-from src.core.database import DATABASE_URL, SessionLocal, init_db
+from src.core.database import DATABASE_DEBUG, DATABASE_URL, SessionLocal, init_db
 from src.core.enums import AssessmentStage, DecisionType, PlaybookMode, QualityStatus, RiskState, TimeInterval
 from src.core.models import (
     DecisionRecord,
@@ -242,7 +242,7 @@ st.markdown(
     }
     .pill-green {
         background-color: rgba(16, 185, 129, 0.12);
-        color: #34d399;
+        color: #10b981;
         border: 1px solid rgba(16, 185, 129, 0.35);
     }
     .pill-amber {
@@ -268,17 +268,17 @@ st.markdown(
 
     /* Explicit directional colors for trade signals */
     .text-long {
-        color: #00e676 !important;
+        color: #10b981 !important;
         font-weight: 700 !important;
     }
     .text-short {
-        color: #ff5252 !important;
+        color: #f87171 !important;
         font-weight: 700 !important;
     }
     .badge-long {
-        color: #00e676 !important;
-        background: rgba(0, 230, 118, 0.12) !important;
-        border: 1px solid rgba(0, 230, 118, 0.35) !important;
+        color: #10b981 !important;
+        background: rgba(16, 185, 129, 0.12) !important;
+        border: 1px solid rgba(16, 185, 129, 0.35) !important;
         padding: 2px 7px;
         border-radius: 4px;
         font-weight: 700;
@@ -467,6 +467,19 @@ if DATABASE_URL.startswith("postgresql"):
     st.sidebar.markdown("<div style='margin-bottom: 8px;'><span class='status-pill pill-green'>● SUPABASE CLOUD DB</span></div>", unsafe_allow_html=True)
 else:
     st.sidebar.markdown("<div style='margin-bottom: 8px;'><span class='status-pill pill-amber'>STORAGE: LOCAL SQLITE</span></div>", unsafe_allow_html=True)
+    with st.sidebar.expander("🔍 Cloud DB Connection Helper", expanded=False):
+        st.caption(f"**Engine Source:** `{DATABASE_DEBUG.get('source')}`")
+        found_keys = DATABASE_DEBUG.get("secret_keys_found", [])
+        st.caption(f"**Secrets Keys Detected:** `{found_keys}`")
+        if DATABASE_DEBUG.get("error"):
+            st.error(DATABASE_DEBUG["error"])
+        st.markdown(
+            "To connect Supabase, open **App Settings > Secrets** in Streamlit Cloud and enter:\n"
+            "```toml\n"
+            'DATABASE_URL = "postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres"\n'
+            "```\n"
+            "*Ensure password does not have square brackets `[]` and URL is enclosed in quotes.*"
+        )
 
 NAV_OPTIONS = [
     "Opportunity Queue",
@@ -724,7 +737,7 @@ if nav == "Opportunity Queue":
             def highlight_direction(val):
                 s = str(val).upper()
                 if "LONG" in s or "▲" in s:
-                    return "color: #00e676; font-weight: 700;"
+                    return "color: #10b981; font-weight: 700;"
                 elif "SHORT" in s or "▼" in s:
                     return "color: #ff5252; font-weight: 700;"
                 elif "CONFLICT" in s or "CHOP" in s:
@@ -865,7 +878,7 @@ if nav == "Opportunity Queue":
                 # Signal Breakdown & Conflict Reconciliation for the selected Ticker
                 if chosen_agg:
                     if chosen_agg.is_conflicted:
-                        rec_border = "#00e676" if chosen_agg.reconciled_direction == "long" else "#ff5252"
+                        rec_border = "#10b981" if chosen_agg.reconciled_direction == "long" else "#ff5252"
                         rec_badge = "pill-green" if chosen_agg.reconciled_direction == "long" else "pill-red"
                         rec_title = "▲ RECONCILED LONG" if chosen_agg.reconciled_direction == "long" else "▼ RECONCILED SHORT"
                         st.markdown(
@@ -881,7 +894,7 @@ if nav == "Opportunity Queue":
                                     {chosen_agg.reconciliation_summary}
                                 </p>
                                 <div style="margin-top: 6px; font-size: 0.76rem; color: #94a3b8;">
-                                    <span style="color: #00e676; font-weight: 600;">Long Conviction Mass: {chosen_agg.weighted_long_conviction:.0f} pts</span> &nbsp;•&nbsp; 
+                                    <span style="color: #10b981; font-weight: 600;">Long Conviction Mass: {chosen_agg.weighted_long_conviction:.0f} pts</span> &nbsp;•&nbsp; 
                                     <span style="color: #ff5252; font-weight: 600;">Short Conviction Mass: {chosen_agg.weighted_short_conviction:.0f} pts</span>
                                     {f" &nbsp;•&nbsp; <span style='color: #fbbf24; font-weight: 600;'>⚠️ Counter-trend pullback cautioned against HTF trend</span>" if chosen_agg.is_counter_trend_warning else ""}
                                 </div>
@@ -1338,7 +1351,7 @@ elif nav == "Opportunity Detail":
 
             # Multi-Timeframe Trend & Conflict Reconciliation Banner
             if agg.is_conflicted:
-                rec_border = "#00e676" if agg.reconciled_direction == "long" else "#ff5252"
+                rec_border = "#10b981" if agg.reconciled_direction == "long" else "#ff5252"
                 rec_badge = "pill-green" if agg.reconciled_direction == "long" else "pill-red"
                 rec_title = "▲ RECONCILED LONG" if agg.reconciled_direction == "long" else "▼ RECONCILED SHORT"
                 st.markdown(
@@ -1354,7 +1367,7 @@ elif nav == "Opportunity Detail":
                             {agg.reconciliation_summary}
                         </p>
                         <div style="margin-top: 6px; font-size: 0.76rem; color: #94a3b8;">
-                            <span style="color: #00e676; font-weight: 600;">Long Conviction Mass: {agg.weighted_long_conviction:.0f} pts</span> &nbsp;•&nbsp; 
+                            <span style="color: #10b981; font-weight: 600;">Long Conviction Mass: {agg.weighted_long_conviction:.0f} pts</span> &nbsp;•&nbsp; 
                             <span style="color: #ff5252; font-weight: 600;">Short Conviction Mass: {agg.weighted_short_conviction:.0f} pts</span>
                             {f" &nbsp;•&nbsp; <span style='color: #fbbf24; font-weight: 600;'>⚠️ Counter-trend pullback cautioned against HTF trend</span>" if agg.is_counter_trend_warning else ""}
                         </div>
@@ -1838,8 +1851,8 @@ elif nav == "Opportunity Detail":
                                 safe_content = msg["content"].replace("$", "\\$")
                                 prov_badge = msg.get("provider", "AI Agent")
                                 st.markdown(
-                                    f"<div style='background: #0f172a; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; border-left: 3px solid #00e676;'>"
-                                    f"<span style='font-size: 11px; text-transform: uppercase; color: #00e676; font-weight: 700;'>Strategic Officer ({prov_badge})</span>"
+                                    f"<div style='background: #0f172a; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; border-left: 3px solid #10b981;'>"
+                                    f"<span style='font-size: 11px; text-transform: uppercase; color: #10b981; font-weight: 700;'>Strategic Officer ({prov_badge})</span>"
                                     f"</div>",
                                     unsafe_allow_html=True,
                                 )
