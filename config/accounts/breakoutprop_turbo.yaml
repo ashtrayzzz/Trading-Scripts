@@ -1,0 +1,22 @@
+account_id: bp_turbo_10k
+account_type: breakoutprop
+name: Breakoutprop Turbo 10k Evaluation
+starting_equity: 10000.0
+base_currency: USD
+max_drawdown_floor: 9700.0
+daily_loss_limit: 300.0
+operational_buffer: 50.0
+per_trade_risk_limit: 100.0
+daily_reset_utc: "00:30"
+verification_status: unverified_web_research
+leverage_map:
+  BTC: 10.0
+  ETH: 5.0
+  SOL: 5.0
+  XRP: 5.0
+  DOGE: 5.0
+  DEFAULT: 5.0
+notes: >
+  Breakoutprop 1-Step Turbo $10k evaluation account.
+  Static max drawdown of 3% ($9,700 floor) does not trail profits.
+  Daily loss limit of 3% resets at 00:30 UTC.

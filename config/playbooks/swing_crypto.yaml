@@ -1,0 +1,29 @@
+name: swing_crypto
+description: Higher timeframe trend pullbacks, daily compression expansions, and momentum divergences
+universe: breakoutprop_crypto
+horizons:
+  - 4h
+  - 1d
+required_modules:
+  - technical_scanner
+setups:
+  trend_pullback:
+    ema_zone: [21, 50]
+    min_structure_points: 3
+    ttl_bars: 4
+  daily_compression_expansion:
+    atr_percentile_threshold: 25
+    ttl_bars: 3
+  momentum_divergence:
+    rsi_oversold_cutoff: 35
+    rsi_overbought_cutoff: 65
+    ttl_bars: 3
+scoring:
+  components:
+    setup_quality: 0.30
+    volume_confirmation: 0.20
+    trend_alignment: 0.25
+    compression_duration: 0.15
+    implementation_cost: 0.10
+  missing_required_policy: unscored
+  missing_optional_policy: incomplete

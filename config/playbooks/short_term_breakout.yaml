@@ -1,0 +1,29 @@
+name: short_term_breakout
+description: Intraday compression breakouts, range breaks, and VWAP reclaims
+universe: breakoutprop_crypto
+horizons:
+  - 15m
+  - 1h
+required_modules:
+  - technical_scanner
+setups:
+  compression_breakout:
+    bb_width_percentile_threshold: 25
+    volume_surge_ratio: 1.25
+    ttl_bars: 6
+  range_break:
+    min_range_bars: 10
+    volume_surge_ratio: 1.4
+    ttl_bars: 6
+  vwap_reclaim:
+    min_rsi: 48
+    ttl_bars: 4
+scoring:
+  components:
+    setup_quality: 0.35
+    volume_confirmation: 0.25
+    trend_alignment: 0.20
+    compression_duration: 0.10
+    implementation_cost: 0.10
+  missing_required_policy: unscored
+  missing_optional_policy: incomplete

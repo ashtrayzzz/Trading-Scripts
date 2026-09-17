@@ -1,0 +1,13 @@
+account_id: ibkr_personal
+account_type: personal
+name: Personal Trading Account (IBKR / Wealthsimple)
+starting_equity: 25000.0
+base_currency: USD
+per_trade_risk_pct: 1.0
+max_aggregate_risk_pct: 6.0
+max_positions: 5
+leverage_cap: 2.0
+verification_status: unverified_user_input
+notes: >
+  Generic personal account profile for discretionary swing and breakout trading
+  across US equities, Canadian TSX equities/ETFs, and crypto.

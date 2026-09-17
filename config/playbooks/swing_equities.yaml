@@ -1,0 +1,20 @@
+name: swing_equities
+description: Swing trading setups for US and Canadian equities & ETFs (IBKR and Wealthsimple)
+universe: equities_multicurrency
+horizons:
+  - 1d
+required_modules:
+  - technical_scanner
+setups:
+  trend_pullback:
+    ema_zone: [21, 50]
+    ttl_bars: 5
+  momentum_divergence:
+    ttl_bars: 4
+scoring:
+  components:
+    setup_quality: 0.35
+    volume_confirmation: 0.20
+    trend_alignment: 0.30
+    compression_duration: 0.05
+    implementation_cost: 0.10
