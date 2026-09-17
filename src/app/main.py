@@ -20,7 +20,7 @@ from src.accounts.personal import PersonalAccount
 from src.app.components.chart import create_candlestick_chart
 from src.connectors.bybit import BybitConnector
 from src.connectors.yahoo_finance import YahooFinanceConnector
-from src.core.database import SessionLocal, init_db
+from src.core.database import DATABASE_URL, SessionLocal, init_db
 from src.core.enums import AssessmentStage, DecisionType, PlaybookMode, QualityStatus, RiskState, TimeInterval
 from src.core.models import (
     DecisionRecord,
