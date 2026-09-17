@@ -731,7 +731,21 @@ if nav == "Opportunity Queue":
 
         def render_queue_view(agg_list: list[TickerOpportunityAggregate], raw_opp_list: list[OpportunityVersion], tab_key: str):
             if not agg_list and not raw_opp_list:
-                st.info("No opportunity candidates found matching criteria.")
+                from src.core.models import MarketObservation
+                bar_count = session.query(MarketObservation).count()
+                if bar_count == 0:
+                    st.info(
+                        "⚡ **Fresh Deployment Detected**: Your database is currently empty because local SQLite databases are excluded from Git repository commits.\n\n"
+                        "Click **'Sync Live & Rescan'** in the top right (or the button below) to pull live closed bars from Bybit & Yahoo Finance and generate candidate setups."
+                    )
+                    if st.button("🚀 Ingest Live Feeds & Generate Opportunities", key=f"btn_init_sync_{tab_key}", type="primary"):
+                        with st.spinner("Connecting to Bybit & Yahoo Finance, fetching live bars, and assembling opportunities..."):
+                            from src.connectors.sync import sync_and_rescan_all
+                            res = sync_and_rescan_all(session)
+                        st.success(f"Ingested {res['new_bars']} live bars and generated {res['opportunities_assembled']} candidate setups!")
+                        st.rerun()
+                else:
+                    st.info("No opportunity candidates found matching criteria.")
                 return
 
             c_mode, c_stat = st.columns([3, 2])
