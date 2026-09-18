@@ -214,6 +214,12 @@ protobuf==5.29.6
     #   proto-plus
     #   streamlit
     #   yfinance
+psycopg==3.3.5
+    # via trading-automations (pyproject.toml)
+psycopg-binary==3.3.5
+    # via psycopg
+psycopg2-binary==2.9.13
+    # via trading-automations (pyproject.toml)
 pyarrow==25.0.1
     # via streamlit
 pyasn1==0.6.4
@@ -315,6 +321,7 @@ typing-extensions==4.16.0
     #   grpcio
     #   httpx2
     #   openai
+    #   psycopg
     #   pydantic
     #   pydantic-core
     #   referencing
@@ -348,4 +355,3 @@ yfinance==1.7.0
     # via trading-automations (pyproject.toml)
 zlib-ng==1.0.0
     # via ccxt
-psycopg2-binary>=2.9.9
