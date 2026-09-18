@@ -92,3 +92,17 @@ def test_yahoo_finance_connector_metadata(db_session):
     assert record.symbol == "SPY"
     assert record.venue == "yahoo"
 
+    # Test future contract
+    f_insts = yf.fetch_instruments([("ES=F", "ES", "future", "USD", "E-mini S&P 500 Futures")])
+    assert len(f_insts) == 1
+    f_inst = f_insts[0]
+    assert f_inst.instrument_id == "yahoo:ES=F:future"
+    assert f_inst.symbol == "ES=F"
+    assert f_inst.contract_multiplier == 50.0
+    assert f_inst.tick_size == 0.25
+    yf.save_instruments(db_session, f_insts)
+    f_record = db_session.query(InstrumentRecord).filter_by(id="yahoo:ES=F:future").first()
+    assert f_record is not None
+    assert f_record.symbol == "ES=F"
+
+

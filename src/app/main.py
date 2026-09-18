@@ -697,21 +697,22 @@ if nav == "Opportunity Queue":
                     "Account Eligibility",
                     ["All", "Breakoutprop Eligible", "Personal Eligible", "Both Eligible"],
                 )
+                available_sectors = sorted(list(set(
+                    [get_instrument_sector(opp.instrument_id) for opp in opportunities]
+                )))
+                sector_options = ["All Sectors"] + available_sectors if available_sectors else [
+                    "All Sectors",
+                    "Technology",
+                    "Consumer Discretionary",
+                    "Broad Market Index",
+                    "Tech Index (Nasdaq 100)",
+                    "Canadian TSX 60",
+                    "Crypto Store of Value",
+                    "Crypto Smart Contracts (L1)",
+                ]
                 sector_filter = st.selectbox(
                     "Sector Classification",
-                    [
-                        "All Sectors",
-                        "Technology",
-                        "Consumer Discretionary",
-                        "Broad Market Index",
-                        "Tech Index (Nasdaq 100)",
-                        "Canadian TSX 60",
-                        "Crypto Store of Value",
-                        "Crypto Smart Contracts (L1)",
-                        "Crypto Oracles & Infra",
-                        "Crypto Memecoins & Beta",
-                        "Crypto Payments & Settlement",
-                    ],
+                    sector_options,
                 )
             with f_col4:
                 context_filter = st.selectbox(
