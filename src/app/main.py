@@ -241,9 +241,9 @@ st.markdown(
         line-height: 1;
     }
     .pill-green {
-        background-color: rgba(16, 185, 129, 0.12);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.35);
+        background-color: rgba(4, 120, 87, 0.18);
+        color: #34d399;
+        border: 1px solid rgba(4, 120, 87, 0.45);
     }
     .pill-amber {
         background-color: rgba(245, 158, 11, 0.12);
@@ -268,7 +268,7 @@ st.markdown(
 
     /* Explicit directional colors for trade signals */
     .text-long {
-        color: #10b981 !important;
+        color: #34d399 !important;
         font-weight: 700 !important;
     }
     .text-short {
@@ -276,9 +276,9 @@ st.markdown(
         font-weight: 700 !important;
     }
     .badge-long {
-        color: #10b981 !important;
-        background: rgba(16, 185, 129, 0.12) !important;
-        border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        color: #34d399 !important;
+        background: rgba(4, 120, 87, 0.18) !important;
+        border: 1px solid rgba(4, 120, 87, 0.45) !important;
         padding: 2px 7px;
         border-radius: 4px;
         font-weight: 700;
@@ -292,6 +292,35 @@ st.markdown(
         border-radius: 4px;
         font-weight: 700;
         font-size: 11px;
+    }
+
+    /* Primary Action Buttons: Refined, 20% darker forest emerald tone */
+    button[kind="primary"],
+    button[data-testid="baseButton-primary"],
+    .stButton > button[kind="primary"] {
+        background-color: #065f46 !important;
+        border: 1px solid #047857 !important;
+        color: #f8fafc !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.25) !important;
+    }
+    button[kind="primary"]:hover,
+    button[data-testid="baseButton-primary"]:hover,
+    .stButton > button[kind="primary"]:hover {
+        background-color: #047857 !important;
+        border-color: #059669 !important;
+        color: #ffffff !important;
+    }
+    button[kind="primary"]:active,
+    button[data-testid="baseButton-primary"]:active,
+    .stButton > button[kind="primary"]:active {
+        background-color: #064e3b !important;
+        border-color: #047857 !important;
+    }
+    button[kind="primary"]:focus,
+    button[data-testid="baseButton-primary"]:focus,
+    .stButton > button[kind="primary"]:focus {
+        box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.5) !important;
     }
 
     /* Top Nav Menu & Header Styling: Keep menu accessible, hide external deploy ads */
