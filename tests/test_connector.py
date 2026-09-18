@@ -67,3 +67,28 @@ def test_ingestion_idempotency(db_session, test_instrument):
 
     count = db_session.query(MarketObservation).filter_by(instrument_id=test_instrument.id).count()
     assert count == 1
+
+
+def test_yahoo_finance_connector_metadata(db_session):
+    """Verify YahooFinanceConnector returns properly structured Instrument objects and saves to database."""
+    from src.connectors.yahoo_finance import YahooFinanceConnector
+    from src.core.models import InstrumentRecord
+
+    yf = YahooFinanceConnector()
+    insts = yf.fetch_instruments([("SPY", "SPY", "equity", "USD", "SPDR S&P 500 ETF")])
+    assert len(insts) == 1
+    inst = insts[0]
+    assert inst.instrument_id == "yahoo:SPY:equity"
+    assert inst.venue == "yahoo"
+    assert inst.symbol == "SPY"
+    assert inst.base_currency == "SPY"
+    assert inst.quote_currency == "USD"
+    assert inst.metadata.get("name") == "SPDR S&P 500 ETF"
+
+    saved = yf.save_instruments(db_session, insts)
+    assert saved == 1
+    record = db_session.query(InstrumentRecord).filter_by(id="yahoo:SPY:equity").first()
+    assert record is not None
+    assert record.symbol == "SPY"
+    assert record.venue == "yahoo"
+

@@ -241,9 +241,9 @@ st.markdown(
         line-height: 1;
     }
     .pill-green {
-        background-color: rgba(4, 120, 87, 0.18);
-        color: #34d399;
-        border: 1px solid rgba(4, 120, 87, 0.45);
+        background-color: rgba(6, 78, 59, 0.25);
+        color: #10b981;
+        border: 1px solid rgba(4, 120, 87, 0.5);
     }
     .pill-amber {
         background-color: rgba(245, 158, 11, 0.12);
@@ -294,33 +294,45 @@ st.markdown(
         font-size: 11px;
     }
 
-    /* Primary Action Buttons: Refined, 20% darker forest emerald tone */
+    /* Primary Action Buttons: Deep, rich matte forest emerald (20% darker) */
     button[kind="primary"],
     button[data-testid="baseButton-primary"],
-    .stButton > button[kind="primary"] {
-        background-color: #065f46 !important;
+    button[data-testid="stBaseButton-primary"],
+    .stButton > button[kind="primary"],
+    .stButton > button[data-testid="baseButton-primary"],
+    .stButton > button[data-testid="stBaseButton-primary"] {
+        background-color: #064e3b !important;
         border: 1px solid #047857 !important;
         color: #f8fafc !important;
         font-weight: 600 !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.25) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.35) !important;
     }
     button[kind="primary"]:hover,
     button[data-testid="baseButton-primary"]:hover,
-    .stButton > button[kind="primary"]:hover {
-        background-color: #047857 !important;
-        border-color: #059669 !important;
+    button[data-testid="stBaseButton-primary"]:hover,
+    .stButton > button[kind="primary"]:hover,
+    .stButton > button[data-testid="baseButton-primary"]:hover,
+    .stButton > button[data-testid="stBaseButton-primary"]:hover {
+        background-color: #065f46 !important;
+        border-color: #047857 !important;
         color: #ffffff !important;
     }
     button[kind="primary"]:active,
     button[data-testid="baseButton-primary"]:active,
-    .stButton > button[kind="primary"]:active {
-        background-color: #064e3b !important;
-        border-color: #047857 !important;
+    button[data-testid="stBaseButton-primary"]:active,
+    .stButton > button[kind="primary"]:active,
+    .stButton > button[data-testid="baseButton-primary"]:active,
+    .stButton > button[data-testid="stBaseButton-primary"]:active {
+        background-color: #022c22 !important;
+        border-color: #064e3b !important;
     }
     button[kind="primary"]:focus,
     button[data-testid="baseButton-primary"]:focus,
-    .stButton > button[kind="primary"]:focus {
-        box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.5) !important;
+    button[data-testid="stBaseButton-primary"]:focus,
+    .stButton > button[kind="primary"]:focus,
+    .stButton > button[data-testid="baseButton-primary"]:focus,
+    .stButton > button[data-testid="stBaseButton-primary"]:focus {
+        box-shadow: 0 0 0 2px rgba(6, 78, 59, 0.6) !important;
     }
 
     /* Top Nav Menu & Header Styling: Keep menu accessible, hide external deploy ads */
@@ -608,15 +620,28 @@ if nav == "Opportunity Queue":
     with h_col4:
         st.write("")
         if st.button("Sync Live & Rescan", key="btn_sync_live_queue_top", type="primary", use_container_width=True, help="Pull newest live bars from Bybit & Yahoo Finance, then run the scanner"):
-            with st.spinner("Pulling latest closed bars from Bybit & Yahoo Finance, then rescanning..."):
+            with st.status("🔄 Ingesting Live Feeds & Assembling Setups...", expanded=True) as status_box:
+                def update_sync_ui(msg: str):
+                    status_box.write(f"• {msg}")
                 from src.connectors.sync import sync_and_rescan_all
                 sync_session = get_db_session()
                 try:
-                    res = sync_and_rescan_all(sync_session)
+                    res = sync_and_rescan_all(sync_session, log_fn=update_sync_ui)
+                    status_box.update(label="✅ Ingestion & Setup Generation Complete!", state="complete", expanded=False)
+                    st.session_state["sync_summary_banner"] = (
+                        f"Live Sync Complete! Ingested {res['new_bars']} live bars ({res['bybit_bars']} Bybit + {res['yahoo_bars']} Yahoo Finance) "
+                        f"and assembled {res['opportunities_assembled']} trade candidates."
+                    )
+                except Exception as e:
+                    status_box.update(label=f"❌ Sync failed: {e}", state="error", expanded=True)
+                    st.error(f"Sync error: {e}")
+                    raise
                 finally:
                     sync_session.close()
-            st.success(f"Live Sync Complete! Ingested {res['new_bars']} new bars and assembled {res['opportunities_assembled']} opportunities.")
             st.rerun()
+
+    if "sync_summary_banner" in st.session_state:
+        st.success(st.session_state.pop("sync_summary_banner"))
 
     session = get_db_session()
     try:
@@ -785,17 +810,11 @@ if nav == "Opportunity Queue":
                 bar_count = session.query(MarketObservation).count()
                 if bar_count == 0:
                     st.info(
-                        "⚡ **Fresh Deployment Detected**: Your database is currently empty because local SQLite databases are excluded from Git repository commits.\n\n"
-                        "Click **'Sync Live & Rescan'** in the top right (or the button below) to pull live closed bars from Bybit & Yahoo Finance and generate candidate setups."
+                        "⚡ **Fresh Database Connected**: No market observations have been synced yet.\n\n"
+                        "Click **'Sync Live & Rescan'** in the top-right header above to pull live closed bars from Bybit & Yahoo Finance and generate candidate setups."
                     )
-                    if st.button("🚀 Ingest Live Feeds & Generate Opportunities", key=f"btn_init_sync_{tab_key}", type="primary"):
-                        with st.spinner("Connecting to Bybit & Yahoo Finance, fetching live bars, and assembling opportunities..."):
-                            from src.connectors.sync import sync_and_rescan_all
-                            res = sync_and_rescan_all(session)
-                        st.success(f"Ingested {res['new_bars']} live bars and generated {res['opportunities_assembled']} candidate setups!")
-                        st.rerun()
                 else:
-                    st.info("No opportunity candidates found matching criteria.")
+                    st.info("No opportunity candidates found matching the selected screener criteria.")
                 return
 
             c_mode, c_stat = st.columns([3, 2])

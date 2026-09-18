@@ -42,11 +42,13 @@ def sync_all_feeds(
         bybit.save_instruments(session, insts)
 
         target_insts = insts[:bybit_limit]
-        for inst in target_insts:
+        for idx, inst in enumerate(target_insts):
             for interval in ["15m", "1h", "4h", "1d"]:
                 bars = bybit.fetch_bars(inst, interval=interval, limit=bar_limit)
                 saved = bybit.save_bars(session, bars)
                 stats["bybit_bars"] += saved
+            if log_fn:
+                log_fn(f"Bybit: {inst.symbol} synced ({idx + 1}/{len(target_insts)})")
     except Exception as e:
         logger.error("Bybit sync error", error=str(e))
         if log_fn:
@@ -60,11 +62,13 @@ def sync_all_feeds(
         y_insts = yf.fetch_instruments()
         yf.save_instruments(session, y_insts)
 
-        for y_inst in y_insts:
+        for idx, y_inst in enumerate(y_insts):
             for interval in ["1h", "1d", "1w"]:
                 bars = yf.fetch_bars(y_inst, interval=interval, limit=bar_limit)
                 saved = yf.save_bars(session, bars)
                 stats["yahoo_bars"] += saved
+            if log_fn:
+                log_fn(f"Yahoo: {y_inst.symbol} synced ({idx + 1}/{len(y_insts)})")
     except Exception as e:
         logger.error("Yahoo Finance sync error", error=str(e))
         if log_fn:
@@ -113,6 +117,8 @@ def sync_and_rescan_all(
 
         opps = assembler.assemble_opportunities(session, playbook_name=f"playbook_{h}", horizon=h)
         total_opps += len(opps)
+        if log_fn:
+            log_fn(f"Scanned {h} timeframe: {len(res.signals)} signals, {len(opps)} candidate setups.")
 
     return {
         "new_bars": sync_stats["total_bars"],

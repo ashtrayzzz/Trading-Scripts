@@ -56,26 +56,34 @@ class YahooFinanceConnector(BaseConnector):
     def __init__(self):
         super().__init__(venue_name="yahoo_finance")
 
-    def fetch_instruments(self, symbols: list[str] | None = None) -> list[Instrument]:
+    def fetch_instruments(self, symbols: list[str | tuple] | None = None) -> list[Instrument]:
         """Fetch instrument metadata for equity tickers."""
         instruments = []
         target_symbols = symbols or DEFAULT_EQUITIES
 
         for item in target_symbols:
-            sym = item[0] if isinstance(item, tuple) else item
+            if isinstance(item, tuple):
+                sym, asset, _, quote_curr, name = item
+            else:
+                sym = item
+                asset = sym.split(".")[0]
+                quote_curr = "CAD" if sym.endswith(".TO") else "USD"
+                name = f"{sym} Equity/ETF"
+
+            itype = InstrumentType.ETF if sym in ("SPY", "QQQ", "XIU.TO", "VFV.TO") else InstrumentType.EQUITY
             inst = Instrument(
                 instrument_id=f"yahoo:{sym}:equity",
+                asset_id=asset,
+                venue="yahoo",
                 symbol=sym,
-                name=f"{sym} Equity/ETF",
-                instrument_type=InstrumentType.ETF if sym in ("SPY", "QQQ", "XIU.TO") else InstrumentType.EQUITY,
-                base_asset=sym.split(".")[0],
-                quote_asset="CAD" if sym.endswith(".TO") else "USD",
-                price_precision=2,
-                quantity_precision=2,
-                min_quantity=1.0,
+                instrument_type=itype,
+                base_currency=asset,
+                quote_currency=quote_curr,
                 contract_multiplier=1.0,
+                tick_size=0.01,
+                lot_size=1.0,
                 is_active=True,
-                extra={"source": "yahoo_finance"},
+                metadata={"name": name, "source": "yahoo_finance"},
             )
             instruments.append(inst)
 
