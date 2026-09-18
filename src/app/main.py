@@ -619,26 +619,49 @@ if nav == "Opportunity Queue":
             st.rerun()
     with h_col4:
         st.write("")
-        if st.button("Sync Live & Rescan", key="btn_sync_live_queue_top", type="primary", use_container_width=True, help="Pull newest live bars from Bybit & Yahoo Finance, then run the scanner"):
-            with st.status("🔄 Ingesting Live Feeds & Assembling Setups...", expanded=True) as status_box:
-                def update_sync_ui(msg: str):
-                    status_box.write(f"• {msg}")
-                from src.connectors.sync import sync_and_rescan_all
-                sync_session = get_db_session()
-                try:
-                    res = sync_and_rescan_all(sync_session, log_fn=update_sync_ui)
-                    status_box.update(label="✅ Ingestion & Setup Generation Complete!", state="complete", expanded=False)
-                    st.session_state["sync_summary_banner"] = (
-                        f"Live Sync Complete! Ingested {res['new_bars']} live bars ({res['bybit_bars']} Bybit + {res['yahoo_bars']} Yahoo Finance) "
-                        f"and assembled {res['opportunities_assembled']} trade candidates."
-                    )
-                except Exception as e:
-                    status_box.update(label=f"❌ Sync failed: {e}", state="error", expanded=True)
-                    st.error(f"Sync error: {e}")
-                    raise
-                finally:
-                    sync_session.close()
+        if st.button("Sync Live & Rescan", key="btn_sync_live_queue_top", type="primary", use_container_width=True, help="Pull newest live bars across all 60+ crypto & equity instruments, then run the scanner"):
+            st.session_state["trigger_sync"] = True
             st.rerun()
+
+    # Full-width sync execution banner & progress (never cramped in header column)
+    if st.session_state.get("trigger_sync"):
+        st.session_state["trigger_sync"] = False
+        with st.status("🔄 Ingesting Live Feeds Across All Tickers & Assembling Setups...", expanded=True) as status_box:
+            progress_bar = st.progress(0, text="Initializing live market feeds...")
+            info_line = st.empty()
+
+            def update_sync_ui(pct_or_msg, msg=None):
+                if msg is not None:
+                    pct = max(0.0, min(1.0, float(pct_or_msg)))
+                    text_msg = str(msg)
+                else:
+                    pct = 0.5
+                    text_msg = str(pct_or_msg)
+                progress_bar.progress(int(pct * 100), text=f"{int(pct * 100)}% — {text_msg}")
+                info_line.caption(f"⚡ {text_msg}")
+
+            from src.connectors.sync import sync_and_rescan_all
+            sync_session = get_db_session()
+            try:
+                res = sync_and_rescan_all(sync_session, log_fn=update_sync_ui)
+                inst_count = res.get("instruments_synced", "60+")
+                status_box.update(
+                    label=f"✅ Live Sync Complete! Ingested {res['new_bars']:,} bars across {inst_count} instruments ({res['opportunities_assembled']} setups assembled)",
+                    state="complete",
+                    expanded=False,
+                )
+                st.session_state["sync_summary_banner"] = (
+                    f"Live Sync Complete! Ingested {res['new_bars']:,} live bars across {inst_count} instruments "
+                    f"({res['bybit_bars']:,} Bybit crypto perpetuals + {res['yahoo_bars']:,} Yahoo Finance equities/ETFs) "
+                    f"and assembled {res['opportunities_assembled']} active trade candidates."
+                )
+            except Exception as e:
+                status_box.update(label=f"❌ Sync failed: {e}", state="error", expanded=True)
+                st.error(f"Sync error: {e}")
+                raise
+            finally:
+                sync_session.close()
+        st.rerun()
 
     if "sync_summary_banner" in st.session_state:
         st.success(st.session_state.pop("sync_summary_banner"))

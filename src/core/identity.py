@@ -55,7 +55,17 @@ BREAKOUTPROP_TO_BYBIT_MAP: dict[str, str] = {
     "BCHUSD": "BCH/USDT:USDT",
     "UNIUSD": "UNI/USDT:USDT",
     "PEPEUSD": "1000PEPE/USDT:USDT",
-    "SHIBUSD": "1000SHIB/USDT:USDT",
+    "SHIBUSD": "SHIB1000/USDT:USDT",
+    "ARBUSD": "ARB/USDT:USDT",
+    "OPUSD": "OP/USDT:USDT",
+    "TIAUSD": "TIA/USDT:USDT",
+    "INJUSD": "INJ/USDT:USDT",
+    "RENDERUSD": "RENDER/USDT:USDT",
+    "TAOUSD": "TAO/USDT:USDT",
+    "KASUSD": "KAS/USDT:USDT",
+    "SEIUSD": "SEI/USDT:USDT",
+    "WIFUSD": "WIF/USDT:USDT",
+    "ICPUSD": "ICP/USDT:USDT",
 }
 
 # Reverse mapping: Bybit perpetual symbol -> Breakoutprop symbol

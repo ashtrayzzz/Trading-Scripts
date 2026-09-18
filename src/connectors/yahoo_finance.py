@@ -18,20 +18,46 @@ from src.core.time import (
 
 logger = structlog.get_logger()
 
-# Popular equities & ETFs for Personal Accounts
+# Popular equities & ETFs for Personal Accounts (Wealthsimple + IBKR)
 DEFAULT_EQUITIES = [
-    # US equities & ETFs (IBKR)
-    ("SPY", "SPY", "equity", "USD", "SPDR S&P 500 ETF"),
-    ("QQQ", "QQQ", "equity", "USD", "Invesco QQQ Trust"),
+    # US Index, Sector & Macro ETFs (IBKR)
+    ("SPY", "SPY", "etf", "USD", "SPDR S&P 500 ETF"),
+    ("QQQ", "QQQ", "etf", "USD", "Invesco QQQ Trust"),
+    ("IWM", "IWM", "etf", "USD", "iShares Russell 2000 ETF"),
+    ("DIA", "DIA", "etf", "USD", "SPDR Dow Jones Industrial ETF"),
+    ("SMH", "SMH", "etf", "USD", "VanEck Semiconductor ETF"),
+    ("TLT", "TLT", "etf", "USD", "iShares 20+ Year Treasury Bond ETF"),
+    ("GLD", "GLD", "etf", "USD", "SPDR Gold Shares"),
+    ("SLV", "SLV", "etf", "USD", "iShares Silver Trust"),
+    ("USO", "USO", "etf", "USD", "United States Oil Fund"),
+    # US Mega-Cap Tech, AI & High-Beta Momentum (IBKR)
     ("AAPL", "AAPL", "equity", "USD", "Apple Inc."),
     ("MSFT", "MSFT", "equity", "USD", "Microsoft Corporation"),
     ("NVDA", "NVDA", "equity", "USD", "NVIDIA Corporation"),
     ("TSLA", "TSLA", "equity", "USD", "Tesla Inc."),
-    # Canadian equities & ETFs (Wealthsimple)
-    ("XIU.TO", "XIU", "equity", "CAD", "iShares S&P/TSX 60 Index ETF"),
-    ("VFV.TO", "VFV", "equity", "CAD", "Vanguard S&P 500 Index ETF (CAD)"),
+    ("AMZN", "AMZN", "equity", "USD", "Amazon.com Inc."),
+    ("GOOGL", "GOOGL", "equity", "USD", "Alphabet Inc."),
+    ("META", "META", "equity", "USD", "Meta Platforms Inc."),
+    ("AMD", "AMD", "equity", "USD", "Advanced Micro Devices"),
+    ("COIN", "COIN", "equity", "USD", "Coinbase Global"),
+    ("MSTR", "MSTR", "equity", "USD", "MicroStrategy Inc."),
+    ("PLTR", "PLTR", "equity", "USD", "Palantir Technologies"),
+    ("NFLX", "NFLX", "equity", "USD", "Netflix Inc."),
+    ("SMCI", "SMCI", "equity", "USD", "Super Micro Computer"),
+    # Canadian Core ETFs & Blue Chips (Wealthsimple)
+    ("XIU.TO", "XIU", "etf", "CAD", "iShares S&P/TSX 60 Index ETF"),
+    ("VFV.TO", "VFV", "etf", "CAD", "Vanguard S&P 500 Index ETF (CAD)"),
+    ("XIC.TO", "XIC", "etf", "CAD", "iShares Core S&P/TSX Composite ETF"),
+    ("XEG.TO", "XEG", "etf", "CAD", "iShares S&P/TSX Capped Energy ETF"),
     ("SHOP.TO", "SHOP", "equity", "CAD", "Shopify Inc. (TSX)"),
     ("RY.TO", "RY", "equity", "CAD", "Royal Bank of Canada"),
+    ("TD.TO", "TD", "equity", "CAD", "Toronto-Dominion Bank"),
+    ("ENB.TO", "ENB", "equity", "CAD", "Enbridge Inc."),
+    ("CNR.TO", "CNR", "equity", "CAD", "Canadian National Railway"),
+    ("BNS.TO", "BNS", "equity", "CAD", "Bank of Nova Scotia"),
+    ("SU.TO", "SU", "equity", "CAD", "Suncor Energy Inc."),
+    ("BAM.TO", "BAM", "equity", "CAD", "Brookfield Asset Management"),
+    ("ATD.TO", "ATD", "equity", "CAD", "Alimentation Couche-Tard"),
 ]
 
 INTERVAL_MAP = {
@@ -63,14 +89,14 @@ class YahooFinanceConnector(BaseConnector):
 
         for item in target_symbols:
             if isinstance(item, tuple):
-                sym, asset, _, quote_curr, name = item
+                sym, asset, inst_type_str, quote_curr, name = item
+                itype = InstrumentType.ETF if inst_type_str.lower() == "etf" else InstrumentType.EQUITY
             else:
                 sym = item
                 asset = sym.split(".")[0]
                 quote_curr = "CAD" if sym.endswith(".TO") else "USD"
                 name = f"{sym} Equity/ETF"
-
-            itype = InstrumentType.ETF if sym in ("SPY", "QQQ", "XIU.TO", "VFV.TO") else InstrumentType.EQUITY
+                itype = InstrumentType.ETF if any(sym.startswith(p) for p in ("SPY", "QQQ", "IWM", "DIA", "SMH", "TLT", "GLD", "SLV", "USO", "XIU", "VFV", "XIC", "XEG")) else InstrumentType.EQUITY
             inst = Instrument(
                 instrument_id=f"yahoo:{sym}:equity",
                 asset_id=asset,
