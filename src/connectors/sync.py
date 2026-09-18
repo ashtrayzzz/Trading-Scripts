@@ -50,7 +50,7 @@ def sync_all_feeds(
 
         def fetch_bybit_instrument_bars(inst):
             all_inst_bars = []
-            for interval in ["15m", "1h", "4h", "1d"]:
+            for interval in ["4h", "1d", "1w", "1h"]:
                 bars = bybit.fetch_bars(inst, interval=interval, limit=bar_limit)
                 all_inst_bars.extend(bars)
             return inst.symbol, all_inst_bars
@@ -115,7 +115,7 @@ def sync_and_rescan_all(
     2. Runs technical scanner across all horizons.
     3. Assembles and scores opportunity versions with latest market state.
     """
-    horizons = horizons or ["15m", "1h", "4h", "1d"]
+    horizons = horizons or ["4h", "1d", "1w", "1h"]
     sync_stats = sync_all_feeds(session, log_fn=log_fn)
 
     def notify(pct: float, msg: str):

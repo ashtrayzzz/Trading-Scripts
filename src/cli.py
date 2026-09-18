@@ -94,7 +94,7 @@ def sync(
 
 @app.command()
 def scan(
-    horizon: str = typer.Option("1h", help="Horizon to evaluate: 15m, 1h, 4h, 1d, 1w, 1M, or all"),
+    horizon: str = typer.Option("4h", help="Horizon to evaluate: 4h, 1d, 1w, 1h, 15m, 1M, or all"),
 ):
     """Run technical scanner and assemble scored opportunities."""
     init_db()
@@ -107,7 +107,7 @@ def scan(
         session.close()
         return
 
-    horizons = ["15m", "1h", "4h", "1d", "1w", "1M"] if horizon == "all" else [horizon]
+    horizons = ["4h", "1d", "1w", "1h", "15m", "1M"] if horizon == "all" else [horizon]
     now = utc_now()
     scanner = TechnicalScanner(mode=PlaybookMode.FILTERED)
     assembler = OpportunityAssembler()
@@ -133,10 +133,9 @@ def scan(
 
 
 @app.command()
-@app.command()
 def opps(
     aggregate: bool = typer.Option(True, "--aggregate/--individual", help="Group opportunities by ticker with multi-timeframe confluence"),
-    exclude_15m: bool = typer.Option(False, "--exclude-15m", help="Exclude noisy 15m intraday scalps"),
+    exclude_15m: bool = typer.Option(True, "--exclude-15m/--include-15m", help="Exclude noisy 15m intraday scalps (default: True)"),
     limit: int = typer.Option(20, help="Maximum number of candidates to display"),
 ):
     """Display active ranked opportunities."""

@@ -604,7 +604,7 @@ if nav == "Opportunity Queue":
                         now = utc_now()
                         scanner = TechnicalScanner(mode=PlaybookMode.FILTERED)
                         assembler = OpportunityAssembler()
-                        for h in ["15m", "1h", "4h", "1d"]:
+                        for h in ["4h", "1d", "1w", "1h"]:
                             ctx = ModuleContext(
                                 instrument_ids=inst_ids,
                                 horizon=h,
@@ -674,7 +674,7 @@ if nav == "Opportunity Queue":
         with st.expander("Multi-Facet Screener & Filters", expanded=True):
             f_col1, f_col2, f_col3, f_col4 = st.columns(4)
             with f_col1:
-                horizon_filter = st.selectbox("Horizon", ["All", "15m", "1h", "4h", "1d", "1w", "1M"])
+                horizon_filter = st.selectbox("Horizon", ["All", "1d", "4h", "1w", "1h", "15m", "1M"])
                 dir_filter = st.selectbox("Direction", ["All", "long", "short"])
             with f_col2:
                 min_merit = st.slider("Minimum Merit Score", 0, 100, 40)
@@ -721,7 +721,12 @@ if nav == "Opportunity Queue":
                 )
                 timeframe_scope = st.selectbox(
                     "Timeframe Scope (Noise Filter)",
-                    ["All Horizons (incl. 15m Scalps)", "Swing Only (1h, 4h, 1d - Filter 15m Noise)"],
+                    [
+                        "High-Conviction HTF (4h, 1d, 1w) [Recommended]",
+                        "HTF + 1h Tactical Entry (1h, 4h, 1d, 1w)",
+                        "All Horizons (incl. 15m Scalps)",
+                    ],
+                    help="Filter out noisy lower timeframes. Core swing/macro structures are anchored on 4h, 1d, and 1w, while 1h/15m are reserved for tactical entry timing.",
                 )
 
         # Compute context summary for filtering
@@ -729,7 +734,9 @@ if nav == "Opportunity Queue":
 
         filtered_opps = []
         for opp in opportunities:
-            if timeframe_scope.startswith("Swing Only") and opp.horizon in ("15m", "5m", "1m"):
+            if timeframe_scope.startswith("High-Conviction HTF") and opp.horizon in ("15m", "1h", "5m", "1m"):
+                continue
+            elif timeframe_scope.startswith("HTF + 1h") and opp.horizon in ("15m", "5m", "1m"):
                 continue
             if horizon_filter != "All" and opp.horizon != horizon_filter:
                 continue
@@ -986,7 +993,8 @@ if nav == "Opportunity Queue":
                                 with st.container():
                                     c_d1, c_d2, c_d3 = st.columns([3.2, 1, 0.8])
                                     with c_d1:
-                                        st.markdown(f"• **{tf} Horizon (Merit: {detail.merit_score:.1f})**: {detail.where_summary}")
+                                        tf_role = "Macro Structure" if tf in ("1w", "1M") else ("Swing Setup" if tf in ("1d", "4h") else ("Tactical Entry" if tf == "1h" else "Micro Entry / Scalp"))
+                                        st.markdown(f"• **{tf} Horizon — {tf_role} (Merit: {detail.merit_score:.1f})**: {detail.where_summary}")
                                         st.caption(f"**Why:** {detail.why_summary}  \n**How:** {detail.how_summary}")
                                     Chips_key = f"btn_sub_open_{tab_key}_{s_idx}_{tf_idx}_{detail.opportunity_id}"
                                     with c_d2:
@@ -1472,7 +1480,8 @@ elif nav == "Opportunity Detail":
                         is_active_staged = (detail.opportunity_id == current_staged_id)
                         staged_badge = " [ACTIVE FOR PLANNER]" if is_active_staged else ""
 
-                        with st.expander(f"{tf} Horizon — Merit: {detail.merit_score:.1f}{staged_badge}", expanded=is_active_staged):
+                        tf_role = "Macro Structure" if tf in ("1w", "1M") else ("Swing Setup" if tf in ("1d", "4h") else ("Tactical Entry" if tf == "1h" else "Micro Scalp Entry"))
+                        with st.expander(f"{tf} Horizon — {tf_role} (Merit: {detail.merit_score:.1f}){staged_badge}", expanded=is_active_staged):
                             col_w1, col_w2 = st.columns([3.5, 1])
                             with col_w1:
                                 st.markdown(f"**Where (Price Levels & Risk Geometry):**  \n{detail.where_summary}")

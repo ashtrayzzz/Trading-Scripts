@@ -427,6 +427,7 @@ def aggregate_opportunities_by_ticker(
     watchlist_ids: set[str] | None = None,
     sector_lookup: dict[str, str] | None = None,
     exclude_sub_hourly: bool = False,
+    htf_only: bool = False,
 ) -> list[TickerOpportunityAggregate]:
     watchlist_ids = watchlist_ids or set()
     sector_lookup = sector_lookup or {}
@@ -440,7 +441,9 @@ def aggregate_opportunities_by_ticker(
         and abs(o.trigger_price - o.invalidation_price) >= 1e-4
     ]
 
-    if exclude_sub_hourly:
+    if htf_only:
+        opportunities = [o for o in opportunities if o.horizon in ("4h", "1d", "1w", "1M")]
+    elif exclude_sub_hourly:
         opportunities = [o for o in opportunities if o.horizon not in ("15m", "5m", "1m")]
 
     horizon_order = {"15m": 1, "1h": 2, "4h": 3, "1d": 4, "1w": 5, "1M": 6}
@@ -453,10 +456,14 @@ def aggregate_opportunities_by_ticker(
     aggregates: list[TickerOpportunityAggregate] = []
 
     for inst_id, opp_list in grouped.items():
-        # Sort opportunities for this ticker by merit descending
+        # Prefer higher timeframes (1d, 4h, 1w) over lower timeframes (1h, 15m) as the primary directional anchor
+        def opp_priority_key(o: OpportunityVersion):
+            htf_rank = {"1d": 5, "4h": 4, "1w": 3, "1M": 3, "1h": 2, "15m": 1}.get(o.horizon, 0)
+            return (htf_rank, o.merit_score or 0.0, o.confidence_score)
+
         sorted_opps = sorted(
             opp_list,
-            key=lambda o: (o.merit_score or 0.0, o.confidence_score),
+            key=opp_priority_key,
             reverse=True,
         )
         primary_opp = sorted_opps[0]

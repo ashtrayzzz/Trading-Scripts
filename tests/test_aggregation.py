@@ -441,3 +441,69 @@ def test_risk_geometry_invariants_and_neutral_filtering(mem_session):
     assert aggs[0].target_2r > aggs[0].trigger_price
 
 
+def test_htf_priority_and_noise_filtering(mem_session):
+    """
+    Verify that higher timeframe (Daily, 4h, 1w) setups are prioritized
+    as the primary opportunity anchor over noisy lower timeframes (15m, 1h),
+    and that htf_only filters out sub-4h noise.
+    """
+    now = utc_now()
+    inst = "yahoo:SPY:etf"
+
+    # 15m noisy scalp with high nominal merit
+    opp_15m = OpportunityVersion(
+        opportunity_id="SPY_15M_SCALP",
+        revision=1,
+        playbook_name="vcei_squeeze",
+        instrument_id=inst,
+        direction="long",
+        horizon="15m",
+        lifecycle_status=CandidateLifecycle.SCORED.value,
+        merit_score=92.0,
+        confidence_score=0.9,
+        thesis="15m micro momentum scalp",
+        trigger_price=590.0,
+        invalidation_price=588.5,
+        as_of=now,
+        available_at=now,
+        quality_status=QualityStatus.VALID.value,
+        producer="test",
+        producer_version="0.1.0",
+    )
+
+    # 1d high-conviction macro/swing setup with slightly lower nominal merit
+    opp_1d = OpportunityVersion(
+        opportunity_id="SPY_1D_SWING",
+        revision=1,
+        playbook_name="shla_liquidity_sweep",
+        instrument_id=inst,
+        direction="long",
+        horizon="1d",
+        lifecycle_status=CandidateLifecycle.SCORED.value,
+        merit_score=80.0,
+        confidence_score=0.85,
+        thesis="Daily structural liquidity sweep at major demand zone",
+        trigger_price=585.0,
+        invalidation_price=578.0,
+        as_of=now,
+        available_at=now,
+        quality_status=QualityStatus.VALID.value,
+        producer="test",
+        producer_version="0.1.0",
+    )
+
+    aggs = aggregate_opportunities_by_ticker([opp_15m, opp_1d])
+    assert len(aggs) == 1
+    # 1d must be chosen as primary opportunity anchor over 15m noise
+    assert aggs[0].primary_opportunity.opportunity_id == "SPY_1D_SWING"
+    assert aggs[0].trigger_price == 585.0
+    assert aggs[0].peak_merit_score == 92.0
+
+    # Test htf_only filter
+    htf_aggs = aggregate_opportunities_by_ticker([opp_15m, opp_1d], htf_only=True)
+    assert len(htf_aggs) == 1
+    assert "15m" not in htf_aggs[0].active_horizons
+    assert htf_aggs[0].active_horizons == ["1d"]
+
+
+
